@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model roll {
+  roll_id     Int       @id @default(autoincrement())
+  nimetus     String    @unique @db.VarChar(100)
+  markus      String?
+  oiguse_tase Int
+
+  kasutajad kasutaja[]
+}
+
+model osakond {
+  osakond_id Int    @id @default(autoincrement())
+  nimetus    String @db.VarChar(100)
+  hoone      String @db.VarChar(100)
+  korrus     Int
+
+  kulastused kulastus[]
+}
+
+model kulaline {
+  kulaline_id Int     @id @default(autoincrement())
+  nimi        String  @db.VarChar(150)
+  isikukood   String? @unique @db.VarChar(20)
+  ettevote    String? @db.VarChar(150)
+
+  kulastused kulastus[]
+}
+
+model kasutaja {
+  kasutaja_id   Int     @id @default(autoincrement())
+  kasutajanimi  String  @unique @db.VarChar(100)
+  email         String? @unique @db.VarChar(150)
+  password_hash String? @db.VarChar(255)
+  is_active     Boolean @default(true)
+  roll_id       Int
+
+  roll       roll       @relation(fields: [roll_id], references: [roll_id])
+  kulastused kulastus[]
+}
+
+model uksekaart {
+  kaart_id       Int    @id @default(autoincrement())
+  kaardi_nr      String @unique @db.VarChar(50)
+  loogiline_nimi String? @db.VarChar(100)
+  staatus        String @default("vaba") @db.VarChar(20)
+
+  kulastused kulastus[]
+}
+
+model kulastus {
+  kulastus_id   Int       @id @default(autoincrement())
+  saabumise_aeg DateTime  @default(now()) @db.Timestamp(6)
+  lahkumise_aeg DateTime? @db.Timestamp(6)
+  markus        String?
+  kulaline_id   Int
+  kaart_id      Int
+  kasutaja_id   Int
+  osakond_id    Int
+  eesmark       String
+
+  kulaline  kulaline  @relation(fields: [kulaline_id], references: [kulaline_id])
+  uksekaart uksekaart @relation(fields: [kaart_id], references: [kaart_id])
+  kasutaja  kasutaja  @relation(fields: [kasutaja_id], references: [kasutaja_id])
+  osakond   osakond   @relation(fields: [osakond_id], references: [osakond_id])
+}
