@@ -7,66 +7,68 @@ datasource db {
 }
 
 model roll {
-  roll_id     Int       @id @default(autoincrement())
-  nimetus     String    @unique @db.VarChar(100)
+  roll_id     Int        @id @default(autoincrement())
+  nimetus     String     @unique @db.VarChar(100)
   markus      String?
   oiguse_tase Int
-
-  kasutajad kasutaja[]
+  kasutajad   kasutaja[]
 }
 
 model osakond {
-  osakond_id Int    @id @default(autoincrement())
-  nimetus    String @db.VarChar(100)
-  hoone      String @db.VarChar(100)
+  osakond_id Int        @id @default(autoincrement())
+  nimetus    String     @db.VarChar(100)
+  hoone      String     @db.VarChar(100)
   korrus     Int
-
   kulastused kulastus[]
 }
 
 model kulaline {
-  kulaline_id Int     @id @default(autoincrement())
-  nimi        String  @db.VarChar(150)
-  isikukood   String? @unique @db.VarChar(20)
-  ettevote    String? @db.VarChar(150)
-
-  kulastused kulastus[]
+  kulaline_id Int        @id @default(autoincrement())
+  nimi        String     @db.VarChar(150)
+  isikukood   String?    @unique @db.VarChar(20)
+  ettevote    String?    @db.VarChar(150)
+  kulastused  kulastus[]
 }
 
 model kasutaja {
-  kasutaja_id   Int     @id @default(autoincrement())
-  kasutajanimi  String  @unique @db.VarChar(100)
-  email         String? @unique @db.VarChar(150)
-  password_hash String? @db.VarChar(255)
-  is_active     Boolean @default(true)
+  kasutaja_id   Int        @id @default(autoincrement())
+  kasutajanimi  String     @unique @db.VarChar(100)
+  email         String?    @unique @db.VarChar(150)
   roll_id       Int
+  password_hash String?
+  is_active     Boolean?   @default(true)
+  roll          roll       @relation(fields: [roll_id], references: [roll_id], onUpdate: NoAction, map: "fk_kasutaja_roll")
+  kulastused    kulastus[]
 
-  roll       roll       @relation(fields: [roll_id], references: [roll_id])
-  kulastused kulastus[]
+  @@index([kasutajanimi], map: "idx_kasutaja_kasutajanimi")
 }
 
 model uksekaart {
-  kaart_id       Int    @id @default(autoincrement())
-  kaardi_nr      String @unique @db.VarChar(50)
-  loogiline_nimi String? @db.VarChar(100)
-  staatus        String @default("vaba") @db.VarChar(20)
+  kaart_id       Int        @id @default(autoincrement())
+  kaardi_nr      String     @unique @db.VarChar(50)
+  loogiline_nimi String?    @db.VarChar(100)
+  staatus        String     @default("vaba") @db.VarChar(20)
+  kulastused     kulastus[]
 
-  kulastused kulastus[]
+  @@index([staatus], map: "idx_uksekaart_staatus")
 }
 
 model kulastus {
   kulastus_id   Int       @id @default(autoincrement())
-  saabumise_aeg DateTime  @default(now()) @db.Timestamp(6)
+  saabumise_aeg DateTime  @db.Timestamp(6)
   lahkumise_aeg DateTime? @db.Timestamp(6)
   markus        String?
   kulaline_id   Int
   kaart_id      Int
   kasutaja_id   Int
   osakond_id    Int
-  eesmark       String
+  eesm_rk       String    @map("eesmärk")
+  uksekaart     uksekaart @relation(fields: [kaart_id], references: [kaart_id], onUpdate: NoAction, map: "fk_kulastus_kaart")
+  kasutaja      kasutaja  @relation(fields: [kasutaja_id], references: [kasutaja_id], onUpdate: NoAction, map: "fk_kulastus_kasutaja")
+  kulaline      kulaline  @relation(fields: [kulaline_id], references: [kulaline_id], onUpdate: NoAction, map: "fk_kulastus_kulaline")
+  osakond       osakond   @relation(fields: [osakond_id], references: [osakond_id], onUpdate: NoAction, map: "fk_kulastus_osakond")
 
-  kulaline  kulaline  @relation(fields: [kulaline_id], references: [kulaline_id])
-  uksekaart uksekaart @relation(fields: [kaart_id], references: [kaart_id])
-  kasutaja  kasutaja  @relation(fields: [kasutaja_id], references: [kasutaja_id])
-  osakond   osakond   @relation(fields: [osakond_id], references: [osakond_id])
+  @@index([kasutaja_id], map: "idx_kulastus_kasutaja_id")
+  @@index([kulaline_id], map: "idx_kulastus_kulaline_id")
+  @@index([saabumise_aeg], map: "idx_kulastus_saabumise_aeg")
 }
