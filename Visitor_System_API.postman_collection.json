@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Visitor System API",
-    "description": "Postman collection for Visitor System full-stack project.",
+    "name": "Visitor System API - matched to repo",
+    "description": "Postman collection matched to triinpiip/VisitorSystem backend routes.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -16,10 +16,10 @@
   ],
   "item": [
     {
-      "name": "Auth",
+      "name": "01 Auth",
       "item": [
         {
-          "name": "Register",
+          "name": "Register admin",
           "request": {
             "method": "POST",
             "header": [
@@ -36,7 +36,7 @@
           }
         },
         {
-          "name": "Login",
+          "name": "Login admin",
           "event": [
             {
               "listen": "test",
@@ -69,10 +69,23 @@
       ]
     },
     {
-      "name": "Users / Profile",
+      "name": "02 Protected user routes",
       "item": [
         {
-          "name": "My profile",
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/profile"
+          }
+        },
+        {
+          "name": "Me",
           "request": {
             "method": "GET",
             "header": [
@@ -82,6 +95,19 @@
               }
             ],
             "url": "{{baseUrl}}/api/me"
+          }
+        },
+        {
+          "name": "Admin only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin-only"
           }
         },
         {
@@ -98,7 +124,7 @@
           }
         },
         {
-          "name": "Admin only",
+          "name": "Departments",
           "request": {
             "method": "GET",
             "header": [
@@ -107,13 +133,13 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/admin-only"
+            "url": "{{baseUrl}}/api/departments"
           }
         }
       ]
     },
     {
-      "name": "Guests",
+      "name": "03 Guests",
       "item": [
         {
           "name": "List guests",
@@ -145,12 +171,12 @@
             "url": "{{baseUrl}}/api/guests",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Mari\",\n  \"last_name\": \"Mets\",\n  \"personal_id\": \"49001010000\",\n  \"company\": \"Example O\\u00dc\"\n}"
+              "raw": "{\n  \"first_name\": \"Mari\",\n  \"last_name\": \"Mets\",\n  \"personal_id\": \"49001010000\",\n  \"company\": \"Example OÜ\"\n}"
             }
           }
         },
         {
-          "name": "Delete guest",
+          "name": "Delete guest by ID",
           "request": {
             "method": "DELETE",
             "header": [
@@ -165,7 +191,7 @@
       ]
     },
     {
-      "name": "Cards",
+      "name": "04 Cards",
       "item": [
         {
           "name": "List cards",
@@ -217,7 +243,7 @@
       ]
     },
     {
-      "name": "Visits",
+      "name": "05 Visits",
       "item": [
         {
           "name": "List visits",
@@ -280,7 +306,7 @@
           }
         },
         {
-          "name": "Delete visit",
+          "name": "Delete visit by ID",
           "request": {
             "method": "DELETE",
             "header": [
@@ -290,24 +316,6 @@
               }
             ],
             "url": "{{baseUrl}}/api/visits/1"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Departments",
-      "item": [
-        {
-          "name": "List departments",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/departments"
           }
         }
       ]
