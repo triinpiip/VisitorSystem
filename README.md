@@ -155,7 +155,3 @@ Recommended testing order:
 | Form validation | Required-field checks in backend routes |
 | User roles | Role table and role middleware |
 | API docs | Postman collection |
-
-## Notes
-
-The old `prisma-test.js` file is only useful for temporary development testing. If it is not used anymore, it can be deleted before submission.
