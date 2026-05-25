@@ -247,7 +247,7 @@ app.put("/api/cards/:id/assign-guest", authMiddleware, roleMiddleware("administr
         kaart_id,
         kasutaja_id,
         osakond_id,
-        eesmark
+        eesmärk
       )
       VALUES (
         CURRENT_TIMESTAMP,
@@ -311,7 +311,7 @@ app.get("/api/visits", authMiddleware, async (req, res) => {
         v.kasutaja_id AS employee_id,
         v.kaart_id AS access_card_id,
         v.osakond_id AS department_id,
-        v.eesmark AS purpose,
+        v.eesmärk AS purpose,
         v.markus AS note,
         v.saabumise_aeg AS arrival_time,
         v.lahkumise_aeg AS leaving_time,
@@ -354,7 +354,7 @@ app.get("/api/my-visits", authMiddleware, async (req, res) => {
         v.kasutaja_id AS employee_id,
         v.kaart_id AS access_card_id,
         v.osakond_id AS department_id,
-        v.eesmark AS purpose,
+        v.eesmärk AS purpose,
         v.markus AS note,
         v.saabumise_aeg AS arrival_time,
         v.lahkumise_aeg AS leaving_time,
@@ -410,7 +410,7 @@ app.post("/api/visits", authMiddleware, async (req, res) => {
         kaart_id,
         kasutaja_id,
         osakond_id,
-        eesmark
+        eesmärk
       )
       VALUES (
         CURRENT_TIMESTAMP,
@@ -428,7 +428,7 @@ app.post("/api/visits", authMiddleware, async (req, res) => {
         kasutaja_id AS employee_id,
         kaart_id AS access_card_id,
         osakond_id AS department_id,
-        eesmark AS purpose,
+        eesmärk AS purpose,
         saabumise_aeg AS arrival_time,
         lahkumise_aeg AS leaving_time
     `;
