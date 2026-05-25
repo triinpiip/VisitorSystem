@@ -1,36 +1,161 @@
-Visitor System
-This is a web application for managing guests, visits and access cards.
+# Visitor System
 
-Technologies
-Node.js + Express, Prisma, PostgreSQL, React (Vite), JWT
+Visitor System is a full-stack web application for managing guests, visits and access cards.
 
-How to run
-Clone the project: git clone https://github.com/Vollinoomik/Test.git cd Test/visitor-backend
+## Technologies
 
-Install backend: npm install
+- Backend: Node.js + Express
+- Database ORM: Prisma
+- Database: PostgreSQL
+- Frontend: React + Vite
+- Routing: React Router
+- State management: Context API (`AuthContext`)
+- Authentication: JWT + bcrypt
+- API style: REST
+- API documentation/testing: Postman Collection
 
-Create .env file in visitor-backend: DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/visitor" JWT_SECRET="supersecret"
+## Main features
 
-Run database: npx prisma migrate dev npx prisma generate
+- User registration and login
+- JWT authentication
+- Private frontend routes with `ProtectedRoute`
+- Role-based backend authorization with `roleMiddleware`
+- At least two user roles, for example `administraator` and employee/user roles
+- Guests CRUD
+- Visits CRUD
+- Access card listing, assigning and freeing
+- Department and employee data loading
+- Error handling with HTTP status codes and JSON error messages
+- Basic form validation in backend routes
 
-Start backend: npm run dev
+## How to run
 
-Open new terminal and start frontend: cd visitor-frontend npm install npm run dev
+Clone the project:
 
-Open browser: http://localhost:5173
+```bash
+git clone https://github.com/triinpiip/VisitorSystem.git
+cd VisitorSystem
+```
 
-Login
-Create user via API: POST /api/auth/register
+Install backend dependencies:
 
-Example: { "username": "admin", "password": "admin123", "role": "administraator" }
+```bash
+npm install
+```
 
-Then login: POST /api/auth/login
+Create a `.env` file in the project root:
 
-API testing
-Open Postman Import Visitor_System_API.postman_collection.json Run Auth → Login Then test endpoints
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/visitor"
+JWT_SECRET="change_this_secret"
+PORT=5000
+```
 
-Features
-Guests can be created and viewed Visits can be created, finished and deleted Cards can be assigned to guests and freed Purpose (eesmärk) can be added when assigning card Roles: administraator and employee
+Run database migrations and generate Prisma client:
 
-Notes
-Backend runs on http://localhost:5000 Frontend runs on http://localhost:5173
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+Start backend:
+
+```bash
+npm run dev
+```
+
+Open a new terminal and start frontend:
+
+```bash
+cd visitor-frontend
+npm install
+npm run dev
+```
+
+Open frontend:
+
+```text
+http://localhost:5173
+```
+
+Backend runs on:
+
+```text
+http://localhost:5000
+```
+
+## Authentication
+
+Create a user:
+
+```http
+POST /api/auth/register
+```
+
+Example body:
+
+```json
+{
+  "username": "admin",
+  "password": "admin123",
+  "role": "administraator",
+  "email": "admin@example.com"
+}
+```
+
+Login:
+
+```http
+POST /api/auth/login
+```
+
+Example body:
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+The login response returns a JWT token. Protected API requests must include:
+
+```http
+Authorization: Bearer <token>
+```
+
+## API documentation
+
+Import this file into Postman:
+
+```text
+Visitor_System_API.postman_collection.json
+```
+
+Recommended testing order:
+
+1. Auth → Register
+2. Auth → Login
+3. Guests / Cards / Visits endpoints
+
+## Requirement coverage
+
+| Requirement | Covered by |
+|---|---|
+| Authentication | `/api/auth/register`, `/api/auth/login`, JWT |
+| Authorization | `authMiddleware`, `roleMiddleware` |
+| Private routes | `ProtectedRoute` |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| CRUD API | Guests, visits, cards |
+| Reactive UI | React components |
+| State management | Context API |
+| API requests | REST API calls from frontend |
+| Error handling | Backend `try/catch` and HTTP error responses |
+| Form validation | Required-field checks in backend routes |
+| User roles | Role table and role middleware |
+| API docs | Postman collection |
+
+## Notes
+
+The old `prisma-test.js` file is only useful for temporary development testing. If it is not used anymore, it can be deleted before submission.
