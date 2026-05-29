@@ -37,10 +37,10 @@ export default function createAuthRouter(prisma) {
             "Parool peab olema vähemalt 8 märki ning sisaldama suurt tähte, väikest tähte ja numbrit",
         });
       }
-
+      
       const roles = await prisma.$queryRaw`
         SELECT roll_id, nimetus
-        FROM roll
+        FROM "roll"
         WHERE nimetus = ${role}
         LIMIT 1
       `;
@@ -53,7 +53,7 @@ export default function createAuthRouter(prisma) {
 
       const existing = await prisma.$queryRaw`
         SELECT kasutaja_id
-        FROM kasutaja
+        FROM "kasutaja"
         WHERE kasutajanimi = ${username}
       `;
 
