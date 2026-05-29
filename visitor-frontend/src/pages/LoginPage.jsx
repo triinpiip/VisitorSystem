@@ -190,6 +190,8 @@ const styles = {
   },
 
   error: {
+<<<<<<< HEAD
+=======
     margin: 0,
     color: "#dc2626",
     background: "#fef2f2",
@@ -201,6 +203,22 @@ const styles = {
   footer: {
     textAlign: "center",
     color: "#6b7280",
+>>>>>>> a18b85492f70f31605b3cd48f75fd1b497ee4e8e
+    margin: 0,
+    color: "#dc2626",
+    background: "#fef2f2",
+    padding: "0.8rem",
+    borderRadius: "12px",
+    border: "1px solid #fecaca",
+  },
+<<<<<<< HEAD
+
+  footer: {
+    textAlign: "center",
+    color: "#6b7280",
     margin: 0,
   },
 };
+=======
+};
+>>>>>>> a18b85492f70f31605b3cd48f75fd1b497ee4e8e
