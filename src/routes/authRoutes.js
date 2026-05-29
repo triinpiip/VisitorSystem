@@ -2,40 +2,53 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const allowedRoles = ["administraator", "kasutaja"];
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 export default function createAuthRouter(prisma) {
   const router = express.Router();
 
   router.post("/register", async (req, res) => {
     try {
-      const { username, password, role, email } = req.body;
+      const { username, password, confirmPassword, role, email } = req.body;
 
-      if (!username || !password || !role) {
+      if (!username || !password || !confirmPassword || !role) {
         return res.status(400).json({
-          message: "Kasutajanimi, parool ja roll on kohustuslikud",
+          message:
+            "Kasutajanimi, parool, parooli kordus ja roll on kohustuslikud",
         });
       }
 
-      const roleMap = {
-        Admin: "administraator",
-        admin: "administraator",
-        administraator: "administraator",
-        Registratuur: "registratuur",
-        registratuur: "registratuur",
-        Turva: "turva",
-        turva: "turva",
-      };
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({
+          message: "Lubatud rollid on ainult administraator ja kasutaja",
+        });
+      }
 
-      const dbRole = roleMap[role] || role;
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          message: "Paroolid ei ühti",
+        });
+      }
+
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+          message:
+            "Parool peab olema vähemalt 8 märki ning sisaldama suurt tähte, väikest tähte ja numbrit",
+        });
+      }
 
       const roles = await prisma.$queryRaw`
         SELECT roll_id, nimetus
         FROM roll
-        WHERE nimetus = ${dbRole}
+        WHERE nimetus = ${role}
         LIMIT 1
       `;
 
       if (!roles.length) {
-        return res.status(400).json({ message: `Rolli ei leitud: ${role}` });
+        return res.status(400).json({
+          message: `Rolli ei leitud: ${role}`,
+        });
       }
 
       const existing = await prisma.$queryRaw`
@@ -45,7 +58,9 @@ export default function createAuthRouter(prisma) {
       `;
 
       if (existing.length) {
-        return res.status(409).json({ message: "Kasutajanimi on juba olemas" });
+        return res.status(409).json({
+          message: "Kasutajanimi on juba olemas",
+        });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -111,19 +126,25 @@ export default function createAuthRouter(prisma) {
       `;
 
       if (!users.length) {
-        return res.status(401).json({ message: "Vale kasutajanimi või parool" });
+        return res.status(401).json({
+          message: "Vale kasutajanimi või parool",
+        });
       }
 
       const user = users[0];
 
       if (!user.is_active) {
-        return res.status(403).json({ message: "Kasutaja ei ole aktiivne" });
+        return res.status(403).json({
+          message: "Kasutaja ei ole aktiivne",
+        });
       }
 
       const ok = await bcrypt.compare(password, user.password_hash ?? "");
 
       if (!ok) {
-        return res.status(401).json({ message: "Vale kasutajanimi või parool" });
+        return res.status(401).json({
+          message: "Vale kasutajanimi või parool",
+        });
       }
 
       const token = jwt.sign(
