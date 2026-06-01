@@ -53,7 +53,7 @@ export default function LoginPage() {
       }
 
       login(data.token, data.user);
-      navigate("/employee");
+      navigate("/visits");
     } catch (err) {
       setError(err.message || "Sisselogimine ebaõnnestus");
     } finally {
