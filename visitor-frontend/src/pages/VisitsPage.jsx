@@ -301,12 +301,14 @@ export default function VisitsPage() {
                       </button>
                     )}
 
-                    <button
-                      onClick={() => handleDelete(visit.id)}
-                      style={styles.deleteBtn}
-                    >
-                      Kustuta
-                    </button>
+{user?.role === "administraator" && (
+  <button
+    onClick={() => handleDelete(visit.id)}
+    style={styles.deleteBtn}
+  >
+    Kustuta
+  </button>
+)}
                   </td>
                 </tr>
               ))
