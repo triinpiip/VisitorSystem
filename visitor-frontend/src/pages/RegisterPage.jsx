@@ -9,7 +9,7 @@ export default function RegisterPage() {
     username: "",
     password: "",
     confirmPassword: "",
-    role: "kasutaja",
+    role: "registratuur",
   });
 
   const [error, setError] = useState("");
@@ -158,7 +158,7 @@ export default function RegisterPage() {
             value={form.role}
             onChange={handleChange}
           >
-            <option value="kasutaja">Kasutaja</option>
+            <option value="registratuur">Registratuur</option>
             <option value="administraator">Administraator</option>
           </select>
         </label>
