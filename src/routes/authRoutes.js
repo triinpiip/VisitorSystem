@@ -1,47 +1,62 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { body } from "express-validator";
 
-const allowedRoles = ["administraator", "registratuur"];
+import { validate } from "../middleware/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+const allowedRoles = ["administraator", "kasutaja"];
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-function getJwtSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET puudub .env failist");
-  }
-  return secret;
-}
 
 export default function createAuthRouter(prisma) {
   const router = express.Router();
 
-  router.post("/register", async (req, res) => {
-    try {
-      const { username, password, confirmPassword, role, email } = req.body;
+  router.post(
+    "/register",
+    [
+      body("username")
+        .trim()
+        .notEmpty()
+        .withMessage("Kasutajanimi on kohustuslik")
+        .isLength({ min: 3, max: 50 })
+        .withMessage("Kasutajanimi peab olema 3–50 märki pikk"),
 
-      if (!username || !password || !confirmPassword || !role) {
-        return res.status(400).json({
-          message: "Kasutajanimi, parool, parooli kordus ja roll on kohustuslikud",
-        });
-      }
+      body("email")
+        .optional({ nullable: true, checkFalsy: true })
+        .trim()
+        .isEmail()
+        .withMessage("Email peab olema korrektne"),
 
-      if (!allowedRoles.includes(role)) {
-        return res.status(400).json({
-          message: "Lubatud rollid on ainult administraator ja registratuur",
-        });
-      }
+      body("role")
+        .trim()
+        .notEmpty()
+        .withMessage("Roll on kohustuslik")
+        .isIn(allowedRoles)
+        .withMessage("Lubatud rollid on ainult administraator ja kasutaja"),
 
-      if (password !== confirmPassword) {
-        return res.status(400).json({ message: "Paroolid ei ühti" });
-      }
+      body("password")
+        .notEmpty()
+        .withMessage("Parool on kohustuslik")
+        .matches(passwordRegex)
+        .withMessage(
+          "Parool peab olema vähemalt 8 märki ning sisaldama suurt tähte, väikest tähte ja numbrit"
+        ),
 
-      if (!passwordRegex.test(password)) {
-        return res.status(400).json({
-          message:
-            "Parool peab olema vähemalt 8 märki ning sisaldama suurt tähte, väikest tähte ja numbrit",
-        });
-      }
+      body("confirmPassword")
+        .notEmpty()
+        .withMessage("Parooli kordus on kohustuslik")
+        .custom((value, { req }) => {
+          if (value !== req.body.password) {
+            throw new Error("Paroolid ei ühti");
+          }
+
+          return true;
+        }),
+    ],
+    validate,
+    asyncHandler(async (req, res) => {
+      const { username, password, role, email } = req.body;
 
       const roles = await prisma.$queryRaw`
         SELECT roll_id, nimetus
@@ -51,23 +66,40 @@ export default function createAuthRouter(prisma) {
       `;
 
       if (!roles.length) {
-        return res.status(400).json({ message: `Rolli ei leitud: ${role}` });
+        const error = new Error(`Rolli ei leitud: ${role}`);
+        error.statusCode = 400;
+        throw error;
       }
 
       const existing = await prisma.$queryRaw`
         SELECT kasutaja_id
         FROM kasutaja
         WHERE kasutajanimi = ${username}
+        LIMIT 1
       `;
 
       if (existing.length) {
-        return res.status(409).json({ message: "Kasutajanimi on juba olemas" });
+        const error = new Error("Kasutajanimi on juba olemas");
+        error.statusCode = 409;
+        throw error;
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
+
       const created = await prisma.$queryRaw`
-        INSERT INTO kasutaja (kasutajanimi, email, password_hash, roll_id, is_active)
-        VALUES (${username}, ${email ?? null}, ${passwordHash}, ${roles[0].roll_id}, true)
+        INSERT INTO kasutaja (
+          kasutajanimi,
+          email,
+          password_hash,
+          roll_id,
+          is_active
+        ) VALUES (
+          ${username},
+          ${email || null},
+          ${passwordHash},
+          ${roles[0].roll_id},
+          true
+        )
         RETURNING
           kasutaja_id AS id,
           kasutaja_id AS employee_id,
@@ -77,23 +109,25 @@ export default function createAuthRouter(prisma) {
           is_active
       `;
 
-      return res.status(201).json(created[0]);
-    } catch (error) {
-      console.error("Register error:", error);
-      return res.status(500).json({
-        message: "Registreerimine ebaõnnestus",
-        error: error.message,
-      });
-    }
-  });
+      res.status(201).json(created[0]);
+    })
+  );
 
-  router.post("/login", async (req, res) => {
-    try {
+  router.post(
+    "/login",
+    [
+      body("username")
+        .trim()
+        .notEmpty()
+        .withMessage("Kasutajanimi on kohustuslik"),
+
+      body("password")
+        .notEmpty()
+        .withMessage("Parool on kohustuslik"),
+    ],
+    validate,
+    asyncHandler(async (req, res) => {
       const { username, password } = req.body;
-
-      if (!username || !password) {
-        return res.status(400).json({ message: "Kasutajanimi ja parool on kohustuslikud" });
-      }
 
       const users = await prisma.$queryRaw`
         SELECT
@@ -112,18 +146,25 @@ export default function createAuthRouter(prisma) {
       `;
 
       if (!users.length) {
-        return res.status(401).json({ message: "Vale kasutajanimi või parool" });
+        const error = new Error("Vale kasutajanimi või parool");
+        error.statusCode = 401;
+        throw error;
       }
 
       const user = users[0];
 
       if (!user.is_active) {
-        return res.status(403).json({ message: "Kasutaja ei ole aktiivne" });
+        const error = new Error("Kasutaja ei ole aktiivne");
+        error.statusCode = 403;
+        throw error;
       }
 
-      const ok = await bcrypt.compare(password, user.password_hash ?? "");
-      if (!ok) {
-        return res.status(401).json({ message: "Vale kasutajanimi või parool" });
+      const passwordIsValid = await bcrypt.compare(password, user.password_hash ?? "");
+
+      if (!passwordIsValid) {
+        const error = new Error("Vale kasutajanimi või parool");
+        error.statusCode = 401;
+        throw error;
       }
 
       const token = jwt.sign(
@@ -134,11 +175,11 @@ export default function createAuthRouter(prisma) {
           role: user.role,
           role_id: user.roll_id,
         },
-        getJwtSecret(),
+        process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );
 
-      return res.json({
+      res.json({
         token,
         user: {
           id: user.id,
@@ -149,14 +190,8 @@ export default function createAuthRouter(prisma) {
           role_id: user.roll_id,
         },
       });
-    } catch (error) {
-      console.error("Login error:", error);
-      return res.status(500).json({
-        message: "Sisselogimine ebaõnnestus",
-        error: error.message,
-      });
-    }
-  });
+    })
+  );
 
   return router;
 }
