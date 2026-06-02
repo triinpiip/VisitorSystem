@@ -45,11 +45,10 @@ npm install
 
 Create a `.env` file in the project root:
 
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/visitor"
-JWT_SECRET="change_this_secret"
 PORT=5000
-```
+CLIENT_URL=http://localhost:5173
+DATABASE_URL=...
+JWT_SECRET=...
 
 Run database migrations and generate Prisma client:
 

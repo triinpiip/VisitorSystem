@@ -10,6 +10,8 @@ export default function GuestsPage() {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
   const [form, setForm] = useState({
     first_name: "",
@@ -40,20 +42,63 @@ export default function GuestsPage() {
     loadGuests();
   }, []);
 
+  const validateForm = () => {
+    const errors = {};
+
+    if (!form.first_name.trim()) {
+      errors.first_name = "Eesnimi on kohustuslik";
+    }
+
+    if (!form.last_name.trim()) {
+      errors.last_name = "Perenimi on kohustuslik";
+    }
+
+    if (form.personal_id.trim() && !/^\d{11}$/.test(form.personal_id.trim())) {
+      errors.personal_id = "Isikukood peab koosnema 11 numbrist";
+    }
+
+    if (form.company.trim().length > 100) {
+      errors.company = "Ettevõtte nimi võib olla kuni 100 märki";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setForm((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    setSubmitError("");
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     try {
+      setSubmitError("");
+
       await apiFetch("/guests", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          first_name: form.first_name.trim(),
+          last_name: form.last_name.trim(),
+          personal_id: form.personal_id.trim() || null,
+          company: form.company.trim() || null,
+        }),
       });
 
       setForm({
@@ -63,9 +108,10 @@ export default function GuestsPage() {
         company: "",
       });
 
-      loadGuests();
+      setFormErrors({});
+      await loadGuests();
     } catch (err) {
-      alert(err.message || "Külalise lisamine ebaõnnestus");
+      setSubmitError(err.message || "Külalise lisamine ebaõnnestus");
     }
   };
 
@@ -100,44 +146,80 @@ export default function GuestsPage() {
         </div>
       </div>
 
-      <form onSubmit={handleCreate} style={styles.form}>
-        <input
-          name="first_name"
-          placeholder="Eesnimi"
-          value={form.first_name}
-          onChange={handleChange}
-          style={styles.input}
-          required
-        />
+      <form onSubmit={handleCreate} style={styles.form} noValidate>
+        <div style={styles.field}>
+          <input
+            name="first_name"
+            placeholder="Eesnimi"
+            value={form.first_name}
+            onChange={handleChange}
+            style={{
+              ...styles.input,
+              ...(formErrors.first_name ? styles.inputError : {}),
+            }}
+          />
+          {formErrors.first_name && (
+            <p style={styles.fieldError}>{formErrors.first_name}</p>
+          )}
+        </div>
 
-        <input
-          name="last_name"
-          placeholder="Perenimi"
-          value={form.last_name}
-          onChange={handleChange}
-          style={styles.input}
-          required
-        />
+        <div style={styles.field}>
+          <input
+            name="last_name"
+            placeholder="Perenimi"
+            value={form.last_name}
+            onChange={handleChange}
+            style={{
+              ...styles.input,
+              ...(formErrors.last_name ? styles.inputError : {}),
+            }}
+          />
+          {formErrors.last_name && (
+            <p style={styles.fieldError}>{formErrors.last_name}</p>
+          )}
+        </div>
 
-        <input
-          name="personal_id"
-          placeholder="Isikukood"
-          value={form.personal_id}
-          onChange={handleChange}
-          style={styles.input}
-        />
+        <div style={styles.field}>
+          <input
+            name="personal_id"
+            placeholder="Isikukood"
+            value={form.personal_id}
+            onChange={handleChange}
+            style={{
+              ...styles.input,
+              ...(formErrors.personal_id ? styles.inputError : {}),
+            }}
+          />
+          {formErrors.personal_id && (
+            <p style={styles.fieldError}>{formErrors.personal_id}</p>
+          )}
+        </div>
 
-        <input
-          name="company"
-          placeholder="Ettevõte"
-          value={form.company}
-          onChange={handleChange}
-          style={styles.input}
-        />
+        <div style={styles.field}>
+          <input
+            name="company"
+            placeholder="Ettevõte"
+            value={form.company}
+            onChange={handleChange}
+            style={{
+              ...styles.input,
+              ...(formErrors.company ? styles.inputError : {}),
+            }}
+          />
+          {formErrors.company && (
+            <p style={styles.fieldError}>{formErrors.company}</p>
+          )}
+        </div>
 
         <button type="submit" style={styles.addBtn}>
           Lisa külaline
         </button>
+
+        {submitError && (
+          <div style={styles.formAlert}>
+            {submitError}
+          </div>
+        )}
       </form>
 
       {loading && <p>Laen andmeid...</p>}
@@ -215,10 +297,30 @@ const styles = {
     padding: "1rem",
     borderRadius: "12px",
   },
+  field: {
+    display: "flex",
+    flexDirection: "column",
+  },
   input: {
     padding: "0.75rem",
     borderRadius: "8px",
     border: "1px solid #ccc",
+  },
+  inputError: {
+    border: "1px solid #dc2626",
+  },
+  fieldError: {
+    color: "#dc2626",
+    fontSize: "0.85rem",
+    margin: "0.35rem 0 0",
+  },
+  formAlert: {
+    gridColumn: "1 / -1",
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "1px solid #fecaca",
+    padding: "0.75rem",
+    borderRadius: "8px",
   },
   addBtn: {
     padding: "0.8rem",
