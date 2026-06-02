@@ -95,8 +95,8 @@ Example body:
 
 ```json
 {
-  "username": "admin",
-  "password": "admin123",
+  "username": "admin3",
+  "password": "Admin123",
   "role": "administraator",
   "email": "admin@example.com"
 }
@@ -112,8 +112,8 @@ Example body:
 
 ```json
 {
-  "username": "admin",
-  "password": "admin123"
+  "username": "admin3",
+  "password": "Admin123"
 }
 ```
 
@@ -150,7 +150,7 @@ Recommended testing order:
 | Reactive UI | React components |
 | State management | Context API |
 | API requests | REST API calls from frontend |
-| Error handling | Backend `try/catch` and HTTP error responses |
+| Error handling | Centralized error handler middleware |
 | Form validation | Required-field checks in backend routes |
 | User roles | Role table and role middleware |
 | API docs | Postman collection |
