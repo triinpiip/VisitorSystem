@@ -201,11 +201,7 @@ const styles = {
   footer: {
     textAlign: "center",
     color: "#6b7280",
-    margin: 0,
-    color: "#dc2626",
-    background: "#fef2f2",
-    padding: "0.8rem",
-    borderRadius: "12px",
-    border: "1px solid #fecaca",
+    marginTop: "0.5rem",
+   fontSize: "0.9rem",
   },
 };
