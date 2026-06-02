@@ -1,24 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import pkg from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import createAuthRouter from "./routes/authRoutes.js";
 import { authMiddleware, roleMiddleware } from "./middleware/authMiddleware.js";
-
-const { PrismaClient } = pkg;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL puudub .env failist");
-}
-
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET puudub .env failist");
-}
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-});
+import { prisma } from "./lib/prisma.js";
 
 const app = express();
 
