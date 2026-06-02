@@ -50,6 +50,12 @@ export default function EmployeePage() {
     .sort((a, b) => new Date(b.arrival_time) - new Date(a.arrival_time))
     .slice(0, 5);
 
+  const formatDateTime = (value) => {
+  if (!value) return "-";
+
+  return String(value).replace("T", " ").slice(0, 19);
+  };
+
   const freeCards = cards.filter((card) => card.status === "vaba");
 
   if (loading) {
@@ -94,7 +100,7 @@ export default function EmployeePage() {
                   <tr key={visit.id}>
                     <td>{getGuestName(visit) || "-"}</td>
                     <td>{visit.card_number || "-"}</td>
-                    <td>{new Date(visit.leaving_time).toLocaleString()}</td>
+                    <td>{formatDateTime(visit.leaving_time)}</td>
                   </tr>
                 ))
               )}
@@ -124,7 +130,7 @@ export default function EmployeePage() {
                   <tr key={visit.id}>
                     <td>{getGuestName(visit) || "-"}</td>
                     <td>{visit.card_number || "-"}</td>
-                    <td>{new Date(visit.arrival_time).toLocaleString()}</td>
+                    <td>{formatDateTime(visit.arrival_time)}</td>
                   </tr>
                 ))
               )}

@@ -117,6 +117,12 @@ export default function VisitsPage() {
     }
   };
 
+  const formatDateTime = (value) => {
+  if (!value) return "-";
+
+  return String(value).replace("T", " ").slice(0, 19);
+  };
+
   const freeCards = cards.filter((card) => card.status === "vaba");
   const handleSort = (field) => {
   if (sortField === field) {
@@ -236,7 +242,7 @@ export default function VisitsPage() {
           <table className="data-table" style={styles.table}>
             <thead>
               <tr>
-                <th onClick={() => handleSort("id")} style={styles.sortableHeader}>
+              <th onClick={() => handleSort("id")} style={styles.sortableHeader}>
                 ID {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>                
                 <th onClick={() => handleSort("guest_name")} style={styles.sortableHeader}>
@@ -291,16 +297,8 @@ export default function VisitsPage() {
                     <td>{visit.card_number || "-"}</td>
                     <td>{visit.department_name || "-"}</td>
                     <td>{visit.purpose || "-"}</td>
-                    <td>
-                      {visit.arrival_time
-                        ? new Date(visit.arrival_time).toLocaleString()
-                        : "-"}
-                    </td>
-                    <td>
-                      {visit.leaving_time
-                        ? new Date(visit.leaving_time).toLocaleString()
-                        : "-"}
-                    </td>
+                    <td>{formatDateTime(visit.arrival_time)}</td>
+                    <td>{formatDateTime(visit.leaving_time)}</td>
                     <td>{visit.status}</td>
                     <td>
                       <div style={styles.actions}>
