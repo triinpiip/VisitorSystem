@@ -2,10 +2,13 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { body } from "express-validator";
+
 import createAuthRouter from "./routes/authRoutes.js";
 import { authMiddleware, roleMiddleware } from "./middleware/authMiddleware.js";
 import { prisma } from "./lib/prisma.js";
 import { validate } from "./middleware/validate.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { asyncHandler } from "./utils/asyncHandler.js";
 
 const app = express();
 
@@ -38,8 +41,10 @@ app.get("/api/profile", authMiddleware, (req, res) => {
   res.json({ user: req.user });
 });
 
-app.get("/api/me", authMiddleware, async (req, res) => {
-  try {
+app.get(
+  "/api/me",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
     const users = await prisma.$queryRaw`
       SELECT
         k.kasutaja_id AS id,
@@ -58,23 +63,24 @@ app.get("/api/me", authMiddleware, async (req, res) => {
     `;
 
     if (!users.length) {
-      return res.status(404).json({ message: "Kasutajat ei leitud" });
+      const error = new Error("Kasutajat ei leitud");
+      error.statusCode = 404;
+      throw error;
     }
 
     res.json(users[0]);
-  } catch (error) {
-    console.error("Me error:", error);
-    res.status(500).json({ message: "Profiili laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 app.get("/api/admin-only", authMiddleware, roleMiddleware("administraator"), (req, res) => {
   res.json({ message: "Tere, administraator!", user: req.user });
 });
 
 /* GUESTS */
-app.get("/api/guests", authMiddleware, async (_req, res) => {
-  try {
+app.get(
+  "/api/guests",
+  authMiddleware,
+  asyncHandler(async (_req, res) => {
     const guests = await prisma.$queryRaw`
       SELECT
         kulaline_id AS id,
@@ -94,46 +100,30 @@ app.get("/api/guests", authMiddleware, async (_req, res) => {
     `;
 
     res.json(guests);
-  } catch (error) {
-    console.error("Guests error:", error);
-    res.status(500).json({ message: "Külaliste laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 app.post(
   "/api/guests",
   authMiddleware,
   [
-    body("first_name")
-      .trim()
-      .notEmpty()
-      .withMessage("Eesnimi on kohustuslik"),
-
-    body("last_name")
-      .trim()
-      .notEmpty()
-      .withMessage("Perenimi on kohustuslik"),
-
+    body("first_name").trim().notEmpty().withMessage("Eesnimi on kohustuslik"),
+    body("last_name").trim().notEmpty().withMessage("Perenimi on kohustuslik"),
     body("personal_id")
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ min: 11, max: 11 })
       .withMessage("Isikukood peab olema 11 numbrit pikk"),
-
     body("company")
       .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 100 })
       .withMessage("Ettevõtte nimi võib olla kuni 100 märki"),
   ],
   validate,
-  async (req, res) => {
-  try {
+  asyncHandler(async (req, res) => {
     const { first_name, last_name, personal_id, company } = req.body;
 
-    if (!first_name || !last_name) {
-      return res.status(400).json({ message: "Eesnimi ja perenimi on kohustuslikud" });
-    }
-
     const nimi = `${first_name} ${last_name}`.trim();
+
     const guest = await prisma.$queryRaw`
       INSERT INTO kulaline (nimi, isikukood, ettevote)
       VALUES (${nimi}, ${personal_id || null}, ${company || null})
@@ -150,29 +140,28 @@ app.post(
     `;
 
     res.status(201).json(guest[0]);
-  } catch (error) {
-    console.error("Create guest error:", error);
-    res.status(500).json({ message: "Külalise lisamine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
-app.delete("/api/guests/:id", authMiddleware, roleMiddleware("administraator"), async (req, res) => {
-  try {
+app.delete(
+  "/api/guests/:id",
+  authMiddleware,
+  roleMiddleware("administraator"),
+  asyncHandler(async (req, res) => {
     await prisma.$queryRaw`
       DELETE FROM kulaline
       WHERE kulaline_id = ${Number(req.params.id)}
     `;
 
     res.json({ message: "Külaline kustutatud" });
-  } catch (error) {
-    console.error("Delete guest error:", error);
-    res.status(500).json({ message: "Külalise kustutamine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 /* EMPLOYEES */
-app.get("/api/employees", authMiddleware, async (_req, res) => {
-  try {
+app.get(
+  "/api/employees",
+  authMiddleware,
+  asyncHandler(async (_req, res) => {
     const employees = await prisma.$queryRaw`
       SELECT
         k.kasutaja_id AS id,
@@ -190,15 +179,14 @@ app.get("/api/employees", authMiddleware, async (_req, res) => {
     `;
 
     res.json(employees);
-  } catch (error) {
-    console.error("Employees error:", error);
-    res.status(500).json({ message: "Töötajate laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 /* DEPARTMENTS */
-app.get("/api/departments", authMiddleware, async (_req, res) => {
-  try {
+app.get(
+  "/api/departments",
+  authMiddleware,
+  asyncHandler(async (_req, res) => {
     const departments = await prisma.$queryRaw`
       SELECT osakond_id AS id, nimetus AS name, hoone AS building, korrus AS floor
       FROM osakond
@@ -206,15 +194,14 @@ app.get("/api/departments", authMiddleware, async (_req, res) => {
     `;
 
     res.json(departments);
-  } catch (error) {
-    console.error("Departments error:", error);
-    res.status(500).json({ message: "Osakondade laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 /* CARDS */
-app.get("/api/cards", authMiddleware, async (_req, res) => {
-  try {
+app.get(
+  "/api/cards",
+  authMiddleware,
+  asyncHandler(async (_req, res) => {
     const cards = await prisma.$queryRaw`
       SELECT
         uk.kaart_id AS id,
@@ -230,20 +217,24 @@ app.get("/api/cards", authMiddleware, async (_req, res) => {
     `;
 
     res.json(cards);
-  } catch (error) {
-    console.error("Cards error:", error);
-    res.status(500).json({ message: "Kaartide laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
-app.put("/api/cards/:id/assign-guest", authMiddleware, roleMiddleware("administraator"), async (req, res) => {
-  try {
+app.put(
+  "/api/cards/:id/assign-guest",
+  authMiddleware,
+  roleMiddleware("administraator"),
+  [
+    body("guest_id").isInt({ min: 1 }).withMessage("guest_id peab olema positiivne number"),
+    body("purpose")
+      .optional({ nullable: true, checkFalsy: true })
+      .isLength({ max: 255 })
+      .withMessage("Eesmärk võib olla kuni 255 märki"),
+  ],
+  validate,
+  asyncHandler(async (req, res) => {
     const { guest_id, purpose } = req.body;
     const cardId = Number(req.params.id);
-
-    if (!guest_id) {
-      return res.status(400).json({ message: "guest_id puudub" });
-    }
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`
@@ -286,14 +277,14 @@ app.put("/api/cards/:id/assign-guest", authMiddleware, roleMiddleware("administr
     });
 
     res.json(result);
-  } catch (error) {
-    console.error("assign-guest error:", error);
-    res.status(500).json({ message: "Kaardi määramine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
-app.put("/api/cards/:id/free", authMiddleware, roleMiddleware("administraator"), async (req, res) => {
-  try {
+app.put(
+  "/api/cards/:id/free",
+  authMiddleware,
+  roleMiddleware("administraator"),
+  asyncHandler(async (req, res) => {
     const cardId = Number(req.params.id);
 
     const card = await prisma.$transaction(async (tx) => {
@@ -315,15 +306,14 @@ app.put("/api/cards/:id/free", authMiddleware, roleMiddleware("administraator"),
     });
 
     res.json(card);
-  } catch (error) {
-    console.error("Free card error:", error);
-    res.status(500).json({ message: "Kaardi vabastamine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 /* VISITS */
-app.get("/api/visits", authMiddleware, async (_req, res) => {
-  try {
+app.get(
+  "/api/visits",
+  authMiddleware,
+  asyncHandler(async (_req, res) => {
     const visits = await prisma.$queryRaw`
       SELECT
         v.kulastus_id AS id,
@@ -355,14 +345,13 @@ app.get("/api/visits", authMiddleware, async (_req, res) => {
     `;
 
     res.json(visits);
-  } catch (error) {
-    console.error("Visits error:", error);
-    res.status(500).json({ message: "Külastuste laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
-app.get("/api/my-visits", authMiddleware, async (req, res) => {
-  try {
+app.get(
+  "/api/my-visits",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
     const visits = await prisma.$queryRaw`
       SELECT
         v.kulastus_id AS id,
@@ -390,54 +379,31 @@ app.get("/api/my-visits", authMiddleware, async (req, res) => {
     `;
 
     res.json(visits);
-  } catch (error) {
-    console.error("My visits error:", error);
-    res.status(500).json({ message: "Minu külastuste laadimine ebaõnnestus", error: error.message });
-  }
-});
+  })
+);
 
 app.post(
   "/api/visits",
   authMiddleware,
   [
-    body("guest_id")
-      .isInt({ min: 1 })
-      .withMessage("guest_id peab olema positiivne number"),
-
-    body("employee_id")
-      .isInt({ min: 1 })
-      .withMessage("employee_id peab olema positiivne number"),
-
-    body("access_card_id")
-      .isInt({ min: 1 })
-      .withMessage("access_card_id peab olema positiivne number"),
-
-    body("department_id")
-      .isInt({ min: 1 })
-      .withMessage("department_id peab olema positiivne number"),
-
+    body("guest_id").isInt({ min: 1 }).withMessage("guest_id peab olema positiivne number"),
+    body("employee_id").isInt({ min: 1 }).withMessage("employee_id peab olema positiivne number"),
+    body("access_card_id").isInt({ min: 1 }).withMessage("access_card_id peab olema positiivne number"),
+    body("department_id").isInt({ min: 1 }).withMessage("department_id peab olema positiivne number"),
     body("purpose")
       .trim()
       .notEmpty()
       .withMessage("Külastuse eesmärk on kohustuslik")
       .isLength({ max: 255 })
       .withMessage("Külastuse eesmärk võib olla kuni 255 märki"),
-
     body("note")
-      .optional()
+      .optional({ nullable: true, checkFalsy: true })
       .isLength({ max: 500 })
       .withMessage("Märkus võib olla kuni 500 märki"),
   ],
   validate,
-  async (req, res) => {
-  try {
+  asyncHandler(async (req, res) => {
     const { guest_id, employee_id, access_card_id, department_id, purpose, note } = req.body;
-
-    if (!guest_id || !employee_id || !access_card_id || !department_id || !purpose) {
-      return res.status(400).json({
-        message: "guest_id, employee_id, access_card_id, department_id ja purpose on kohustuslikud",
-      });
-    }
 
     const visit = await prisma.$transaction(async (tx) => {
       const cards = await tx.$queryRaw`
@@ -495,17 +461,13 @@ app.post(
     });
 
     res.status(201).json(visit);
-  } catch (error) {
-    console.error("Create visit error:", error);
-    res.status(error.statusCode ?? 500).json({
-      message: error.statusCode ? error.message : "Külastuse lisamine ebaõnnestus",
-      error: error.message,
-    });
-  }
-});
+  })
+);
 
-app.put("/api/visits/:id/finish", authMiddleware, async (req, res) => {
-  try {
+app.put(
+  "/api/visits/:id/finish",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
     const visit = await prisma.$transaction(async (tx) => {
       const visits = await tx.$queryRaw`
         UPDATE kulastus
@@ -531,31 +493,24 @@ app.put("/api/visits/:id/finish", authMiddleware, async (req, res) => {
     });
 
     res.json(visit);
-  } catch (error) {
-    console.error("Finish visit error:", error);
-    res.status(error.statusCode ?? 500).json({
-      message: error.statusCode ? error.message : "Külastuse lõpetamine ebaõnnestus",
-      error: error.message,
-    });
-  }
-});
+  })
+);
 
-app.delete("/api/visits/:id", authMiddleware, roleMiddleware("administraator"), async (req, res) => {
-  try {
+app.delete(
+  "/api/visits/:id",
+  authMiddleware,
+  roleMiddleware("administraator"),
+  asyncHandler(async (req, res) => {
     await prisma.$queryRaw`
       DELETE FROM kulastus
       WHERE kulastus_id = ${Number(req.params.id)}
     `;
 
     res.json({ message: "Külastus kustutatud" });
-  } catch (error) {
-    console.error("Delete visit error:", error);
-    res.status(500).json({
-      message: "Külastuse kustutamine ebaõnnestus",
-      error: error.message,
-    });
-  }
-});
+  })
+);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
