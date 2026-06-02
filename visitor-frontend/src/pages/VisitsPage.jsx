@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import Header from "../components/Header";
+
 
 export default function VisitsPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [visits, setVisits] = useState([]);
   const [guests, setGuests] = useState([]);
@@ -14,6 +14,8 @@ export default function VisitsPage() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortField, setSortField] = useState("status");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   const [form, setForm] = useState({
     guest_id: "",
@@ -52,11 +54,6 @@ export default function VisitsPage() {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -121,37 +118,39 @@ export default function VisitsPage() {
   };
 
   const freeCards = cards.filter((card) => card.status === "vaba");
+  const handleSort = (field) => {
+  if (sortField === field) {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  } else {
+    setSortField(field);
+    setSortDirection("asc");
+  }
+};
+
+  const sortedVisits = [...visits].sort((a, b) => {
+  let aValue = a[sortField];
+  let bValue = b[sortField];
+
+  if (aValue === null || aValue === undefined) aValue = "";
+  if (bValue === null || bValue === undefined) bValue = "";
+
+  if (typeof aValue === "string") aValue = aValue.toLowerCase();
+  if (typeof bValue === "string") bValue = bValue.toLowerCase();
+
+  if (aValue < bValue) {
+    return sortDirection === "asc" ? -1 : 1;
+  }
+
+  if (aValue > bValue) {
+    return sortDirection === "asc" ? 1 : -1;
+  }
+
+  return 0;
+});
 
   return (
     <div style={styles.page}>
-      <div style={styles.topbar}>
-        <div>
-          <h1>Külastused</h1>
-          <p>
-            Sisselogitud: <strong>{user?.username}</strong> ({user?.role})
-          </p>
-        </div>
-
-        <div style={styles.topButtons}>
-          <button onClick={() => navigate("/guests")} style={styles.navBtn}>
-            Külalised
-          </button>
-
-          {user?.role === "administraator" && (
-            <button onClick={() => navigate("/cards")} style={styles.navBtn}>
-              Kaardid
-            </button>
-          )}
-
-          <button onClick={() => navigate("/employee")} style={styles.navBtn}>
-            Minu vaade
-          </button>
-
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Logi välja
-          </button>
-        </div>
-      </div>
+      <Header title="Külastused" />
 
       <form onSubmit={handleCreate} style={styles.form}>
         <select
@@ -233,88 +232,103 @@ export default function VisitsPage() {
       {error && <p style={styles.error}>{error}</p>}
 
       {!loading && !error && (
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Külaline</th>
-              <th>Registreeris</th>
-              <th>Kaart</th>
-              <th>Osakond</th>
-              <th>Eesmärk</th>
-              <th>Saabumine</th>
-              <th>Lahkumine</th>
-              <th>Staatus</th>
-              <th>Tegevus</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {visits.length === 0 ? (
+        <div style={styles.tableWrapper}>
+          <table className="data-table" style={styles.table}>
+            <thead>
               <tr>
-                <td colSpan="10">Külastusi ei ole</td>
+                <th onClick={() => handleSort("id")} style={styles.sortableHeader}>
+                ID {sortField === "id" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>                
+                <th onClick={() => handleSort("guest_name")} style={styles.sortableHeader}>
+                  Külaline {sortField === "guest_name" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("employee_name")} style={styles.sortableHeader}>
+                  Registreeris {sortField === "employee_name" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("card_number")} style={styles.sortableHeader}>
+                  Kaart {sortField === "card_number" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("department_name")} style={styles.sortableHeader}>
+                  Osakond {sortField === "department_name" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("purpose")} style={styles.sortableHeader}>
+                  Eesmärk {sortField === "purpose" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("arrival_time")} style={styles.sortableHeader}>
+                  Saabumine {sortField === "arrival_time" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("leaving_time")} style={styles.sortableHeader}>
+                  Lahkumine {sortField === "leaving_time" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th onClick={() => handleSort("status")} style={styles.sortableHeader}>
+                  Staatus {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
+                </th>
+                <th>Tegevus</th>
               </tr>
-            ) : (
-              visits.map((visit) => (
-                <tr key={visit.id}>
-                  <td>{visit.id}</td>
+            </thead>
 
-                  <td>
-                    {visit.guest_name ||
-                      `${visit.guest_first_name || ""} ${
-                        visit.guest_last_name || ""
-                      }`}
-                  </td>
-
-                  <td>
-                    {visit.employee_first_name ||
-                      `${visit.employee_first_name || ""} ${
-                        visit.employee_last_name || ""
-                      }`}
-                  </td>
-
-                  <td>{visit.card_number || "-"}</td>
-                  <td>{visit.department_name || "-"}</td>
-                  <td>{visit.purpose || "-"}</td>
-
-                  <td>
-                    {visit.arrival_time
-                      ? new Date(visit.arrival_time).toLocaleString()
-                      : "-"}
-                  </td>
-
-                  <td>
-                    {visit.leaving_time
-                      ? new Date(visit.leaving_time).toLocaleString()
-                      : "-"}
-                  </td>
-
-                  <td>{visit.status}</td>
-
-                  <td>
-                    {visit.status === "active" && (
-                      <button
-                        onClick={() => handleFinish(visit.id)}
-                        style={styles.actionBtn}
-                      >
-                        Lõpeta
-                      </button>
-                    )}
-
-{user?.role === "administraator" && (
-  <button
-    onClick={() => handleDelete(visit.id)}
-    style={styles.deleteBtn}
-  >
-    Kustuta
-  </button>
-)}
-                  </td>
+            <tbody>
+              {visits.length === 0 ? (
+                <tr>
+                  <td colSpan="10">Külastusi ei ole</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                sortedVisits.map((visit) => (
+                  <tr key={visit.id}>
+                    <td>{visit.id}</td>
+                    <td>
+                      {visit.guest_name ||
+                        `${visit.guest_first_name || ""} ${
+                          visit.guest_last_name || ""
+                        }`}
+                    </td>
+                    <td>
+                      {visit.employee_first_name ||
+                        `${visit.employee_first_name || ""} ${
+                          visit.employee_last_name || ""
+                        }`}
+                    </td>
+                    <td>{visit.card_number || "-"}</td>
+                    <td>{visit.department_name || "-"}</td>
+                    <td>{visit.purpose || "-"}</td>
+                    <td>
+                      {visit.arrival_time
+                        ? new Date(visit.arrival_time).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td>
+                      {visit.leaving_time
+                        ? new Date(visit.leaving_time).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td>{visit.status}</td>
+                    <td>
+                      <div style={styles.actions}>
+                        {visit.status === "active" && (
+                          <button
+                            onClick={() => handleFinish(visit.id)}
+                            style={styles.actionBtn}
+                          >
+                            Lõpeta
+                          </button>
+                        )}
+
+                        {user?.role === "administraator" && (
+                          <button
+                            onClick={() => handleDelete(visit.id)}
+                            style={styles.deleteBtn}
+                          >
+                            Kustuta
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -323,29 +337,6 @@ export default function VisitsPage() {
 const styles = {
   page: {
     padding: "2rem",
-    fontFamily: "Arial, sans-serif",
-  },
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "2rem",
-  },
-  topButtons: {
-    display: "flex",
-    gap: "0.75rem",
-  },
-  navBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  logoutBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
   },
   form: {
     display: "grid",
@@ -367,24 +358,40 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
   },
+  tableWrapper: {
+    width: "100%",
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    minWidth: "1100px",
+    borderCollapse: "collapse",
+  },
+  actions: {
+    display: "flex",
+    gap: "0.4rem",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   actionBtn: {
     padding: "0.4rem 0.6rem",
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-    marginRight: "0.4rem",
+    whiteSpace: "nowrap",
   },
   deleteBtn: {
     padding: "0.4rem 0.6rem",
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
+    whiteSpace: "nowrap",
   },
   error: {
     color: "red",
+  },
+  sortableHeader: {
+  cursor: "pointer",
+  userSelect: "none",
   },
 };

@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import Header from "../components/Header";
 
 export default function EmployeePage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const [visits, setVisits] = useState([]);
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const loadData = async () => {
     try {
@@ -77,32 +69,7 @@ export default function EmployeePage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topbar}>
-        <div>
-          <h1>Ülevaade</h1>
-          <p>
-            Sisselogitud: <strong>{user?.username}</strong> ({user?.role})
-          </p>
-        </div>
-
-        <div style={styles.buttons}>
-          <button onClick={() => navigate("/guests")} style={styles.navBtn}>
-            Külalised
-          </button>
-
-          <button onClick={() => navigate("/visits")} style={styles.navBtn}>
-            Külastused
-          </button>
-
-          <button onClick={() => navigate("/cards")} style={styles.navBtn}>
-            Kaardid
-          </button>
-
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Logi välja
-          </button>
-        </div>
-      </div>
+      <Header title="Minu vaade" />
 
       <div style={styles.grid}>
         <div style={styles.section}>
@@ -202,29 +169,6 @@ export default function EmployeePage() {
 const styles = {
   page: {
     padding: "2rem",
-    fontFamily: "Arial, sans-serif",
-  },
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "2rem",
-  },
-  buttons: {
-    display: "flex",
-    gap: "0.75rem",
-  },
-  navBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  logoutBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
   },
   grid: {
     display: "grid",
@@ -237,11 +181,8 @@ const styles = {
     padding: "1rem",
     borderRadius: "12px",
   },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
   error: {
     color: "red",
+    marginBottom: "1rem",
   },
 };

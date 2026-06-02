@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import Header from "../components/Header";
 
 export default function GuestsPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,12 +16,6 @@ export default function GuestsPage() {
     personal_id: "",
     company: "",
   });
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const loadGuests = async () => {
     try {
       setLoading(true);
@@ -117,34 +108,7 @@ export default function GuestsPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topbar}>
-        <div>
-          <h1>Külalised</h1>
-          <p>
-            Sisselogitud: <strong>{user?.username}</strong> ({user?.role})
-          </p>
-        </div>
-
-        <div style={styles.navButtons}>
-          <button onClick={() => navigate("/visits")} style={styles.navBtn}>
-            Külastused
-          </button>
-
-          {user?.role === "administraator" && (
-            <button onClick={() => navigate("/cards")} style={styles.navBtn}>
-              Kaardid
-            </button>
-          )}
-
-          <button onClick={() => navigate("/employee")} style={styles.navBtn}>
-            Minu vaade
-          </button>
-
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Logi välja
-          </button>
-        </div>
-      </div>
+      <Header title="Külalised" />
 
       <form onSubmit={handleCreate} style={styles.form} noValidate>
         <div style={styles.field}>
@@ -226,7 +190,7 @@ export default function GuestsPage() {
       {error && <p style={styles.error}>{error}</p>}
 
       {!loading && !error && (
-        <table style={styles.table}>
+        <table className="data-table" style={styles.table}>
           <thead>
             <tr>
               <th>ID</th>
@@ -263,30 +227,6 @@ export default function GuestsPage() {
 const styles = {
   page: {
     padding: "2rem",
-    fontFamily: "Arial, sans-serif",
-  },
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "2rem",
-  },
-  navButtons: {
-    display: "flex",
-    gap: "0.75rem",
-    alignItems: "center",
-  },
-  navBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  logoutBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
   },
   form: {
     display: "grid",
@@ -306,9 +246,6 @@ const styles = {
     borderRadius: "8px",
     border: "1px solid #ccc",
   },
-  inputError: {
-    border: "1px solid #dc2626",
-  },
   fieldError: {
     color: "#dc2626",
     fontSize: "0.85rem",
@@ -327,10 +264,6 @@ const styles = {
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
   },
   error: {
     color: "red",

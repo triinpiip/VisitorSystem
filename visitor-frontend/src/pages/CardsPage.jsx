@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../api/api";
+import Header from "../components/Header";
 
 export default function CardsPage() {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const [cards, setCards] = useState([]);
   const [guests, setGuests] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const loadData = async () => {
     try {
@@ -88,30 +80,7 @@ export default function CardsPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topbar}>
-        <div>
-          <h1>Uksekaartide haldus</h1>
-          <p>Siin saab administraator määrata uksekaardi külalisele.</p>
-        </div>
-
-        <div style={styles.navButtons}>
-          <button onClick={() => navigate("/guests")} style={styles.navBtn}>
-            Külalised
-          </button>
-
-          <button onClick={() => navigate("/visits")} style={styles.navBtn}>
-            Külastused
-          </button>
-
-          <button onClick={() => navigate("/employee")} style={styles.navBtn}>
-            Minu vaade
-          </button>
-
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Logi välja
-          </button>
-        </div>
-      </div>
+      <Header title="Kaardid" />
 
       {loading && <p>Laen andmeid...</p>}
       {error && <p style={styles.error}>{error}</p>}
@@ -207,29 +176,6 @@ export default function CardsPage() {
 const styles = {
   page: {
     padding: "2rem",
-    fontFamily: "Arial, sans-serif",
-  },
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "2rem",
-  },
-  navButtons: {
-    display: "flex",
-    gap: "0.75rem",
-  },
-  navBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  logoutBtn: {
-    padding: "0.8rem 1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
   },
   table: {
     width: "100%",
@@ -253,10 +199,7 @@ const styles = {
   },
   badge: {
     padding: "0.25rem 0.6rem",
-    borderRadius: "999px",
+    borderRadius: "900px",
     fontSize: "0.85rem",
-  },
-  error: {
-    color: "red",
   },
 };
