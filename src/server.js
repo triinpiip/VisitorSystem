@@ -1,9 +1,11 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { body } from "express-validator";
 import createAuthRouter from "./routes/authRoutes.js";
 import { authMiddleware, roleMiddleware } from "./middleware/authMiddleware.js";
 import { prisma } from "./lib/prisma.js";
+import { validate } from "./middleware/validate.js";
 
 const app = express();
 
@@ -23,6 +25,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.get("/", (_req, res) => {
@@ -97,7 +100,32 @@ app.get("/api/guests", authMiddleware, async (_req, res) => {
   }
 });
 
-app.post("/api/guests", authMiddleware, async (req, res) => {
+app.post(
+  "/api/guests",
+  authMiddleware,
+  [
+    body("first_name")
+      .trim()
+      .notEmpty()
+      .withMessage("Eesnimi on kohustuslik"),
+
+    body("last_name")
+      .trim()
+      .notEmpty()
+      .withMessage("Perenimi on kohustuslik"),
+
+    body("personal_id")
+      .optional({ nullable: true, checkFalsy: true })
+      .isLength({ min: 11, max: 11 })
+      .withMessage("Isikukood peab olema 11 numbrit pikk"),
+
+    body("company")
+      .optional({ nullable: true, checkFalsy: true })
+      .isLength({ max: 100 })
+      .withMessage("Ettevõtte nimi võib olla kuni 100 märki"),
+  ],
+  validate,
+  async (req, res) => {
   try {
     const { first_name, last_name, personal_id, company } = req.body;
 
@@ -368,7 +396,40 @@ app.get("/api/my-visits", authMiddleware, async (req, res) => {
   }
 });
 
-app.post("/api/visits", authMiddleware, async (req, res) => {
+app.post(
+  "/api/visits",
+  authMiddleware,
+  [
+    body("guest_id")
+      .isInt({ min: 1 })
+      .withMessage("guest_id peab olema positiivne number"),
+
+    body("employee_id")
+      .isInt({ min: 1 })
+      .withMessage("employee_id peab olema positiivne number"),
+
+    body("access_card_id")
+      .isInt({ min: 1 })
+      .withMessage("access_card_id peab olema positiivne number"),
+
+    body("department_id")
+      .isInt({ min: 1 })
+      .withMessage("department_id peab olema positiivne number"),
+
+    body("purpose")
+      .trim()
+      .notEmpty()
+      .withMessage("Külastuse eesmärk on kohustuslik")
+      .isLength({ max: 255 })
+      .withMessage("Külastuse eesmärk võib olla kuni 255 märki"),
+
+    body("note")
+      .optional()
+      .isLength({ max: 500 })
+      .withMessage("Märkus võib olla kuni 500 märki"),
+  ],
+  validate,
+  async (req, res) => {
   try {
     const { guest_id, employee_id, access_card_id, department_id, purpose, note } = req.body;
 
@@ -489,7 +550,10 @@ app.delete("/api/visits/:id", authMiddleware, roleMiddleware("administraator"), 
     res.json({ message: "Külastus kustutatud" });
   } catch (error) {
     console.error("Delete visit error:", error);
-    res.status(500).json({ message: "Külastuse kustutamine ebaõnnestus", error: error.message });
+    res.status(500).json({
+      message: "Külastuse kustutamine ebaõnnestus",
+      error: error.message,
+    });
   }
 });
 
