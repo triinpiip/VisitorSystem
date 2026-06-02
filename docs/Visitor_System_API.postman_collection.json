@@ -1,0 +1,324 @@
+{
+  "info": {
+    "name": "Visitor System API - matched to repo",
+    "description": "Postman collection matched to triinpiip/VisitorSystem backend routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Register admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin2\",\n  \"password\": \"Admin123\",\n  \"role\": \"administraator\",\n  \"email\": \"admin@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin2\",\n  \"password\": \"Admin123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Protected user routes",
+      "item": [
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/profile"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/me"
+          }
+        },
+        {
+          "name": "Admin only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin-only"
+          }
+        },
+        {
+          "name": "Employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/employees"
+          }
+        },
+        {
+          "name": "Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/departments"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Guests",
+      "item": [
+        {
+          "name": "List guests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/guests"
+          }
+        },
+        {
+          "name": "Create guest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/guests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Mari\",\n  \"last_name\": \"Mets\",\n  \"personal_id\": \"49001010000\",\n  \"company\": \"Example OÜ\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete guest by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/guests/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Cards",
+      "item": [
+        {
+          "name": "List cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cards"
+          }
+        },
+        {
+          "name": "Assign card to guest",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cards/1/assign-guest",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guest_id\": 1,\n  \"purpose\": \"Kohtumine\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Free card",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cards/1/free"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Visits",
+      "item": [
+        {
+          "name": "List visits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/visits"
+          }
+        },
+        {
+          "name": "My visits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/my-visits"
+          }
+        },
+        {
+          "name": "Create visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/visits",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guest_id\": 1,\n  \"employee_id\": 1,\n  \"access_card_id\": 1,\n  \"department_id\": 1,\n  \"purpose\": \"Kohtumine\",\n  \"note\": \"Test\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Finish visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/visits/1/finish"
+          }
+        },
+        {
+          "name": "Delete visit by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/visits/1"
+          }
+        }
+      ]
+    }
+  ]
+}
