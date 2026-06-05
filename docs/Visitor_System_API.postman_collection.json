@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Visitor System API - matched to repo",
-    "description": "Postman collection matched to triinpiip/VisitorSystem backend routes.",
+    "name": "Visitor System API",
+    "description": "Postman collection for Visitor System backend routes.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,9 +12,42 @@
     {
       "key": "token",
       "value": ""
+    },
+    {
+      "key": "guestId",
+      "value": "1"
+    },
+    {
+      "key": "visitId",
+      "value": "1"
+    },
+    {
+      "key": "cardId",
+      "value": "1"
+    },
+    {
+      "key": "employeeId",
+      "value": "1"
+    },
+    {
+      "key": "departmentId",
+      "value": "1"
     }
   ],
   "item": [
+    {
+      "name": "00 General",
+      "item": [
+        {
+          "name": "API health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          }
+        }
+      ]
+    },
     {
       "name": "01 Auth",
       "item": [
@@ -31,7 +64,7 @@
             "url": "{{baseUrl}}/api/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"admin2\",\n  \"password\": \"Admin123\",\n  \"role\": \"administraator\",\n  \"email\": \"admin@example.com\"\n}"
+              "raw": "{\n  \"username\": \"admin2\",\n  \"email\": \"admin@example.com\",\n  \"role\": \"administraator\",\n  \"password\": \"Admin123\",\n  \"confirmPassword\": \"Admin123\"\n}"
             }
           }
         },
@@ -69,7 +102,7 @@
       ]
     },
     {
-      "name": "02 Protected user routes",
+      "name": "02 Profile",
       "item": [
         {
           "name": "Profile",
@@ -109,32 +142,6 @@
             ],
             "url": "{{baseUrl}}/api/admin-only"
           }
-        },
-        {
-          "name": "Employees",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/employees"
-          }
-        },
-        {
-          "name": "Departments",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/departments"
-          }
         }
       ]
     },
@@ -156,6 +163,20 @@
         },
         {
           "name": "Create guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('guestId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -176,7 +197,7 @@
           }
         },
         {
-          "name": "Delete guest by ID",
+          "name": "Delete guest",
           "request": {
             "method": "DELETE",
             "header": [
@@ -185,13 +206,44 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/guests/1"
+            "url": "{{baseUrl}}/api/guests/{{guestId}}"
           }
         }
       ]
     },
     {
-      "name": "04 Cards",
+      "name": "04 Employees and Departments",
+      "item": [
+        {
+          "name": "List employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/employees"
+          }
+        },
+        {
+          "name": "List departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/departments"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Cards",
       "item": [
         {
           "name": "List cards",
@@ -220,7 +272,7 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{baseUrl}}/api/cards/1/assign-guest",
+            "url": "{{baseUrl}}/api/cards/{{cardId}}/assign-guest",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"guest_id\": 1,\n  \"purpose\": \"Kohtumine\"\n}"
@@ -237,13 +289,13 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/cards/1/free"
+            "url": "{{baseUrl}}/api/cards/{{cardId}}/free"
           }
         }
       ]
     },
     {
-      "name": "05 Visits",
+      "name": "06 Visits",
       "item": [
         {
           "name": "List visits",
@@ -273,6 +325,20 @@
         },
         {
           "name": "Create visit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('visitId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -288,7 +354,7 @@
             "url": "{{baseUrl}}/api/visits",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"guest_id\": 1,\n  \"employee_id\": 1,\n  \"access_card_id\": 1,\n  \"department_id\": 1,\n  \"purpose\": \"Kohtumine\",\n  \"note\": \"Test\"\n}"
+              "raw": "{\n  \"guest_id\": 1,\n  \"employee_id\": 1,\n  \"access_card_id\": 1,\n  \"department_id\": 1,\n  \"purpose\": \"Kohtumine\",\n  \"note\": \"Testkülastus\"\n}"
             }
           }
         },
@@ -302,11 +368,11 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/visits/1/finish"
+            "url": "{{baseUrl}}/api/visits/{{visitId}}/finish"
           }
         },
         {
-          "name": "Delete visit by ID",
+          "name": "Delete visit",
           "request": {
             "method": "DELETE",
             "header": [
@@ -315,7 +381,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/visits/1"
+            "url": "{{baseUrl}}/api/visits/{{visitId}}"
           }
         }
       ]
